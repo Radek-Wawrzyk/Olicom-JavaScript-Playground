@@ -18,7 +18,6 @@ This Webpack 4 Boilerplate comes with 2 builds:
 
 # Setup
 ```sh
-npm instatll
-//start dev mode
-npm start
+yarn instatll
+yarn start
 ```

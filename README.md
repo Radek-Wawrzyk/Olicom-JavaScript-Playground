@@ -1,23 +1,30 @@
 # Olicom JavaScript playground
 
+Project was setup by Webpack4 with following features:
+- JavaScript (ES6)
+- Typescript
+- SCSS/CSS
+- Hot Reloads
+- Multiplay `.html` pages support
+- ES6 Modules
 
-This Webpack 4 Boilerplate comes with 2 builds:
 
---> <code>npm run build:dev</code><br>
-  starts dev server on <code>localhost:8080</code> with livereload, sourcemap
+## Project setup
 
---> <code>npm run build:prod</code><br>
-  creates prod files to <code>/dist</code> with:
+### Installing all npm dependencies
 
-  1. compiles sass/stylus/less to css <br>
-  2. autoprefixer for vendor prefixes (browser compability)<br>
-  3. compiles typescript to ES5 <br>
-  4. minifying for css/js <br>
-  5. uglyfing js code <br>
-  6. hash css and js file (file versioning for browser caching -> cache busting)<br>
+```
+yarn install
+```
 
-# Setup
-```sh
-yarn instatll
+### Compiles and hot-reloads for development
+
+```
 yarn start
+```
+
+### Compiles and minifies for production
+
+```
+yarn build
 ```

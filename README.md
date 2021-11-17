@@ -1,38 +1,24 @@
-# ClassFormValidator
-Class form validator for vanilla JavaScript based on the Typescript
+# Olicom JavaScript playground
 
-### MVP realease ToDo plan by priority status
-- [ ] - Create custom hooks/methods for the form (based on the custom events) => `onSubmit|onSuccess|onError`
-- [ ] - Create options object which will define basic logic
-- [ ] - Reset form after submit (optional)
-- [ ] - More native validating rules
-- [ ] - Create class for extending existing rules
-- [ ] - Scroll to the first invalid element (when form is big)
-- [ ] - Architecture refactor for easier maintain - implementation of OOP design pattern for smaller classes
-- [ ] - HTTP requests based on our client
-- [ ] - More properties for the form (eg touched)
-- [ ] - Unit tests
-- [ ] - i18n or custom localization
-- [ ] - Render form feature
-- [ ] - Dedicated NPM package
 
-### Usage
-TBC
+This Webpack 4 Boilerplate comes with 2 builds:
 
-### Options
-TBC
+--> <code>npm run build:dev</code><br>
+  starts dev server on <code>localhost:8080</code> with livereload, sourcemap
 
-### Instalation
-TBC
+--> <code>npm run build:prod</code><br>
+  creates prod files to <code>/dist</code> with:
 
-### Example
-TBC
+  1. compiles sass/stylus/less to css <br>
+  2. autoprefixer for vendor prefixes (browser compability)<br>
+  3. compiles typescript to ES5 <br>
+  4. minifying for css/js <br>
+  5. uglyfing js code <br>
+  6. hash css and js file (file versioning for browser caching -> cache busting)<br>
 
-### Authors
-TBC
-
-### How to contribute
-TBC
-
-### License
-TBC
+# Setup
+```sh
+npm instatll
+//start dev mode
+npm start
+```

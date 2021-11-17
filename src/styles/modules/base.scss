@@ -1,0 +1,31 @@
+* {
+  box-sizing: border-box;
+}
+
+.page {
+  position: relative;
+
+  &-section {
+    position: relative;
+    padding: 2rem 1rem;
+    width: 100%;
+    max-width: 1440px;
+    margin: 0 auto;
+
+    &__header {
+      margin: 0 0 2rem 0;
+      font-size: 2rem;
+      font-weight: bold;
+
+      &--center {
+        text-align: center;
+      }
+    }
+
+    &__content {
+      width: 100%;
+      max-width: 480px;
+      margin: 0 auto;
+    }
+  }
+}

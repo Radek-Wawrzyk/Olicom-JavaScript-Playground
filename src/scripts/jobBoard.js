@@ -11,11 +11,15 @@ const API_URL = 'https://vayio.recruitee.com/api';
 class JobBoard {
   constructor(root) {
     this.root = root;
+    this.listRoot = null;
+    this.filtersRoot = null;
     this.jobs = [];
     this.activeJob = null;
+    this.activeCategories = {};
     this.apiURL = API_URL;
     this.categories = null;
 
+    this.createRootStructure();
     this.fetchJobs();
   }
 
@@ -29,11 +33,25 @@ class JobBoard {
 
       const { offers: jobs } = await response.json();
       this.setJobs(jobs);
-      this.renderJobs();
       this.renderCategories();
+      this.renderJobs();
     } catch(err) {
       console.log(err);
     }
+  }
+
+  createRootStructure() {
+    const categoriesNode = document.createElement('div');
+    const listNode = document.createElement('div');
+
+    categoriesNode.id = 'categories';
+    listNode.id = 'jobs';
+
+    this.listRoot = listNode;
+    this.filtersRoot = categoriesNode;
+
+    this.root.appendChild(categoriesNode);
+    this.root.appendChild(listNode);
   }
 
   createCategories() {
@@ -51,28 +69,35 @@ class JobBoard {
     });
 
     this.categories =  {
-      locations: allLocationValues,
-      departments: allDepartmentValues,
+      location: allLocationValues,
+      department: allDepartmentValues,
     };
   }
 
   renderCategories() {
     this.createCategories();
     const filters = document.createElement('div');
-    filters.classList.add('job-modal-filters');
+    filters.classList.add('job-board-filters');
 
     const markup = `
-      <ul class="job-modal-filters__list">
+      <ul class="job-board-filters__list">
         ${Object.entries(this.categories).map(([categoryKey, categories]) =>
           `
-            <li class="job-modal-filters__list-item">
-              ${categoryKey}
+            <li class="job-board-filters__list-item">
+              <p class="job-board-filters__list-name">${categoryKey}</p>
 
-              <ul class="">
+              <ul class="job-board-filters__sub-list">
                 ${categories.map((category) => 
                   `
-                    <li>
-                      ${category}
+                    <li class="job-board-filters__item">
+                      <button 
+                        class="job-board-filters__button"
+                        type="button"
+                        title="${category}"
+                        data-category-name="${categoryKey}"
+                      >
+                        ${category}
+                      </button>
                     </li>
                   `
                 ).join('')}
@@ -83,45 +108,44 @@ class JobBoard {
       </ul>
     `;
 
-    const filterDropdownHTML = `
-      <div class="dropdown is-active">
-      <div class="dropdown-trigger">
-        <button class="button" aria-haspopup="true" aria-controls="dropdown-menu2">
-          <span>Filters</span>
-          <span class="icon is-small">
-            <i class="fas fa-angle-down" aria-hidden="true"></i>
-          </span>
-        </button>
-      </div>
+    filters.innerHTML = markup;
+    this.filtersRoot.appendChild(filters);
+    this.subscribeFiltersEventListeners()
+  }
 
-      <div class="dropdown-menu" id="dropdown-menu2" role="menu">
-        <div class="dropdown-content">
-          ${Object.entries(this.categories).map(([categoryKey, categories]) =>
-            `
-              <div class="dropdown-item">
-                <strong>${categoryKey}</strong>
+  subscribeFiltersEventListeners() {
+    const categories = this.root.querySelectorAll('.job-board-filters__button');
 
-                <ul class="">
-                  ${categories.map((category) => 
-                    `
-                      <li class="dropdown-item">
-                        ${category}
-                      </li>
-                    `
-                  ).join('')}
-                </ul>
-              </div>
-              <hr class="dropdown-divider">
-            `
-          ).join('')}
-        </div>
-      </div>
-    </div>
-    `;
+    categories.forEach((category) => {
+      category.addEventListener('click', () => {
+        if (category.classList.contains('job-board-filters__button--is-active')) {
+          category.classList.remove('job-board-filters__button--is-active');
+        } else {
+          category.classList.add('job-board-filters__button--is-active');
+        }
 
-    filters.innerHTML = markup + filterDropdownHTML;
-    this.root.insertBefore(filters, this.root.firstChild);
-    // ToDo - Subscribe dropdown close/open/select events
+        this.selectCategory(category.dataset.categoryName, category.textContent.trim());
+      });
+
+      if (category.textContent.trim() == this.activeCategories[category.dataset.categoryName]) {
+        category.classList.add('job-board-filters__button--is-active');
+      }
+    })
+  }
+
+  selectCategory(categoryName, categoryValue) {
+    let jobs = this.getJobs();
+
+    if (this.activeCategories[categoryName] === categoryValue) delete this.activeCategories[categoryName];
+    else this.activeCategories[categoryName] = categoryValue;
+
+    Object.keys(this.activeCategories).forEach((categoryKey) => {
+      jobs = jobs.filter((job) => {
+        return job[categoryKey] === this.activeCategories[categoryKey];
+      });
+    });
+
+    this.renderJobs(jobs);
   }
 
   setJobs(jobs) {
@@ -144,8 +168,8 @@ class JobBoard {
         ).join('')}
       </ul>
     `;
-    
-    this.root.innerHTML = markup;
+
+    this.listRoot.innerHTML = markup;
     this.subscribeEventListeners();
   }
 

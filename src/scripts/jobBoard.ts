@@ -6,18 +6,30 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 });
 
-const API_URL = 'https://vayio.recruitee.com/api';
+const API_URL:string = 'https://vayio.recruitee.com/api';
 
+interface Job {
+  
+}
 class JobBoard {
-  constructor(root) {
+  public root: HTMLElement;
+  listRoot: HTMLElement;
+  filtersRoot: HTMLElement;
+  jobs: any;
+  activeCategories: any;
+  apiURL: any;
+  categories: any;
+  initialVisibleJobs: any;
+
+  constructor(root, initialVisibleJobs = 6) {
     this.root = root;
     this.listRoot = null;
     this.filtersRoot = null;
     this.jobs = [];
-    this.activeJob = null;
     this.activeCategories = {};
     this.apiURL = API_URL;
     this.categories = null;
+    this.initialVisibleJobs = initialVisibleJobs;
 
     this.createRootStructure();
     this.fetchJobs();
@@ -26,7 +38,7 @@ class JobBoard {
   async fetchJobs() {
     try {
       const response = await fetch(`${this.apiURL}/offers`);
-  
+
       if (!response.ok || response.status !== 200) {
         throw new Error('Bad request');
       }
@@ -34,8 +46,8 @@ class JobBoard {
       const { offers: jobs } = await response.json();
       this.setJobs(jobs);
       this.renderCategories();
-      this.renderJobs();
-    } catch(err) {
+      this.renderJobs(jobs, this.initialVisibleJobs);
+    } catch (err) {
       console.log(err);
     }
   }
@@ -43,15 +55,25 @@ class JobBoard {
   createRootStructure() {
     const categoriesNode = document.createElement('div');
     const listNode = document.createElement('div');
+    const loadMoreNode = document.createElement('button');
 
     categoriesNode.id = 'categories';
     listNode.id = 'jobs';
+    loadMoreNode.id = 'load-more';
+    loadMoreNode.classList = 'button is-primary';
+    loadMoreNode.innerHTML = 'Load More'
 
     this.listRoot = listNode;
     this.filtersRoot = categoriesNode;
 
+    
     this.root.appendChild(categoriesNode);
     this.root.appendChild(listNode);
+    this.root.appendChild(loadMoreNode)
+    
+    loadMoreNode.addEventListener('click', () => {
+      this.loadMoreJobs(loadMoreNode);
+    });
   }
 
   createCategories() {
@@ -68,7 +90,7 @@ class JobBoard {
       }
     });
 
-    this.categories =  {
+    this.categories = {
       location: allLocationValues,
       department: allDepartmentValues,
     };
@@ -82,29 +104,30 @@ class JobBoard {
     const markup = `
       <ul class="job-board-filters__list">
         ${Object.entries(this.categories).map(([categoryKey, categories]) =>
-          `
+      `
             <li class="job-board-filters__list-item">
               <p class="job-board-filters__list-name">${categoryKey}</p>
 
               <ul class="job-board-filters__sub-list">
-                ${categories.map((category) => 
-                  `
+                ${categories.map((category) =>
+        `
                     <li class="job-board-filters__item">
                       <button 
                         class="job-board-filters__button"
                         type="button"
                         title="${category}"
                         data-category-name="${categoryKey}"
+                        data-category-value="${category}"
                       >
                         ${category}
                       </button>
                     </li>
                   `
-                ).join('')}
+      ).join('')}
               </ul>
             </li>
           `
-        ).join('')}
+    ).join('')}
       </ul>
     `;
 
@@ -118,18 +141,8 @@ class JobBoard {
 
     categories.forEach((category) => {
       category.addEventListener('click', () => {
-        if (category.classList.contains('job-board-filters__button--is-active')) {
-          category.classList.remove('job-board-filters__button--is-active');
-        } else {
-          category.classList.add('job-board-filters__button--is-active');
-        }
-
         this.selectCategory(category.dataset.categoryName, category.textContent.trim());
       });
-
-      if (category.textContent.trim() == this.activeCategories[category.dataset.categoryName]) {
-        category.classList.add('job-board-filters__button--is-active');
-      }
     })
   }
 
@@ -146,6 +159,21 @@ class JobBoard {
     });
 
     this.renderJobs(jobs);
+    this.markCategoryAsActive(categoryName, categoryValue);
+  }
+
+  markCategoryAsActive(categoryName, categoryValue) {
+    const buttons = this.root.querySelectorAll(`.job-board-filters__list [data-category-name=${categoryName}]`);
+    const isActive = (button) => button.dataset.categoryValue === categoryValue;
+    const activeButton = [...buttons].find((button) => isActive(button));
+
+    buttons.forEach((button) => {
+      if (!isActive(button)) {
+        button.classList.remove('job-board-filters__button--is-active')
+      }
+    });
+
+    activeButton.classList.toggle('job-board-filters__button--is-active');
   }
 
   setJobs(jobs) {
@@ -156,16 +184,29 @@ class JobBoard {
     return this.jobs;
   }
 
-  renderJobs(jobs = this.getJobs()) {
+  getJobsLeght() {
+    this.getJobs().length;
+  }
+
+  renderJobs(jobs = this.getJobs(), initialVisibleJobs = this.getJobsLeght()) {
+    const jobsList = jobs.slice(0, initialVisibleJobs);
+
     const markup = `
       <ul class="job-board__list">
-        ${jobs.map((job) => 
-          `
-            <li class="job-board-offer" data-job-id="${job.id}">
+        ${jobsList.map((job) =>
+      `
+            <li 
+              class="job-board-offer" 
+              data-job-id="${job.id}" 
+              data-aos="fade-up"
+              data-aos-duration="400" 
+					    data-aos-delay="400"
+              data-aos-easing="ease-out-cubic"
+            >
               ${job.title}
             </li>
           `
-        ).join('')}
+    ).join('')}
       </ul>
     `;
 
@@ -173,9 +214,14 @@ class JobBoard {
     this.subscribeEventListeners();
   }
 
+  loadMoreJobs(buttonNode) {
+    this.renderJobs();
+    buttonNode.remove(buttonNode);
+  }
+
   subscribeEventListeners() {
     const jobs = this.root.querySelectorAll('.job-board__list .job-board-offer');
-    
+
     jobs.forEach((job) => {
       job.addEventListener('click', () => {
         const { jobId } = job.dataset;
@@ -233,14 +279,14 @@ class JobBoard {
         </footer>
       </div>
     `;
-    
+
     modal.innerHTML = markup;
     this.openModal(modal);
     this.subscribeModalListeners(modal);
   }
 
   subscribeModalListeners(modalNode) {
-    const closeTriggers = [ 
+    const closeTriggers = [
       modalNode.querySelector('.modal-card-head .delete'),
       modalNode.querySelector('.modal-card-foot .close'),
       modalNode.querySelector('.modal-background')
